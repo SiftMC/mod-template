@@ -14,6 +14,7 @@ neoForge {
         }
         configureEach {
             gameDirectory = layout.projectDirectory.dir("run")
+            disableIdeRun()
         }
     }
 
