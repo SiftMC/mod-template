@@ -1,0 +1,10 @@
+# One section per Minecraft version. A loader is built for a version when the section sets
+# fabric_api_version, neoforge_version or forge_version.
+# The first section is the version in src/. Change it together with "stonecutter active" in stonecutter.gradle.kts.
+# https://fabricmc.net/develop  https://projects.neoforged.net/neoforged/neoforge  https://files.minecraftforge.net
+fabric_loader_version = "0.19.5"
+
+["26.3"]
+fabric_api_version = "0.161.0+26.3"
+neoforge_version = "26.3.0.34-beta"
+forge_version = "66.0.8"
