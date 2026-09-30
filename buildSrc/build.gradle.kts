@@ -6,6 +6,9 @@ repositories {
     gradlePluginPortal()
     maven("https://maven.fabricmc.net/")
     maven("https://maven.neoforged.net/releases")
+    maven("https://nexus.gtnewhorizons.com/repository/public/") {
+        content { includeGroupByRegex("""com\.gtnewhorizons.*""") }
+    }
 }
 
 // Loader toolchains live here so every subproject shares one classloader for them.
@@ -15,4 +18,6 @@ dependencies {
     implementation("net.fabricmc.fabric-loom:net.fabricmc.fabric-loom.gradle.plugin:1.18.2")
     implementation("net.neoforged.moddev:net.neoforged.moddev.gradle.plugin:2.0.148")
     implementation("net.minecraftforge.gradle:net.minecraftforge.gradle.gradle.plugin:7.0.40")
+    // Only build.retro.gradle.kts needs this one.
+    implementation("com.gtnewhorizons.retrofuturagradle:com.gtnewhorizons.retrofuturagradle.gradle.plugin:2.0.6")
 }
