@@ -19,11 +19,11 @@ Hello from examplemod on fabric 26.3!
 ./gradlew :fabric:26.3:runClient -Pjoin   # joins the dev server on localhost
 ```
 
-Gradle needs JDK 17 or newer to start. It downloads the JDK each Minecraft version needs.
+Gradle needs JDK 21 or newer to start. It downloads the JDK each Minecraft version needs.
 On 1.7.10 the jar to ship is the one without `-dev` in its name.
 
 The first `runServer` exits. Set `eula=true` in `<loader>/versions/<version>/run/eula.txt` and run it again.
-Set `online-mode=false` in `server.properties` next to it, or the server rejects the dev client.
+Set `online-mode=false` and `white-list=false` in `server.properties` next to it, or the server rejects the dev client.
 
 A Gradle sync in IntelliJ writes three run configurations per loader for the version in `src/`.
 They are `Fabric Client`, `Fabric Server` and `Fabric Client (join server)`, and the same for NeoForge and Forge.
@@ -33,7 +33,8 @@ They are `Fabric Client`, `Fabric Server` and `Fabric Client (join server)`, and
 1. Set the `mod_*` entries in `gradle.properties`. Forge and NeoForge accept only lowercase letters, digits and `_`
    in `mod_id`.
 2. Rename the `com.example.examplemod` package in `common`, `fabric`, `neoforge` and `forge`, rename the four
-   `ExampleMod*` classes, and set `ExampleMod.MOD_ID` to your `mod_id`.
+   `ExampleMod*` classes, set `ExampleMod.MOD_ID` to your `mod_id` and change the `examplemod$` prefix of the mixin
+   methods to it.
 3. Rename `examplemod.mixins.json` to `<mod_id>.mixins.json` and update its `package`.
 4. Update the entrypoint class in `fabric.mod.json`.
 5. Update the copyright holder in `LICENSE`.
@@ -66,6 +67,7 @@ The first section is the version in `src/`. To move to a new Minecraft, rename t
 `stonecutter active` in `stonecutter.gradle.kts` to match. Latest loader versions are on the
 [Fabric](https://fabricmc.net/develop), [NeoForge](https://projects.neoforged.net/neoforged/neoforge)
 and [Forge](https://files.minecraftforge.net) sites. Loader Gradle plugins are pinned in `buildSrc/build.gradle.kts`.
+Stonecutter is pinned there and in `settings.gradle.kts`; bump both.
 
 The build picks the Java version, the mixin `compatibilityLevel`, the Minecraft dependency range and the build script
 from the Minecraft version:
@@ -117,17 +119,19 @@ in the IDE after either one, or it keeps checking the old version.
 
 Resources are copied unchanged to every version. Files that only one version should get go in
 `<module>/versions/<version>/src/main/resources`. Metadata files use `${...}` placeholders. The build fills them from
-the `mod_*` entries in `gradle.properties`, every snake_case key in `stonecutter.properties.toml`, and
-`minecraft_version`, `minecraft_version_range`, `minecraft_version_predicate` and `mixin_compatibility_level`.
+the `mod_*` entries in `gradle.properties`, every key with an underscore in its name in `stonecutter.properties.toml`,
+and `minecraft_version`, `minecraft_version_range`, `minecraft_version_predicate` and `mixin_compatibility_level`.
 Syntax reference: https://stonecutter.kikugie.dev/wiki/
 
 ## Rules for common
 
 - Use only vanilla Minecraft and Mixin. The compile classpath holds more than that, Fabric Loader on most versions
-  and Forge on 1.7.10. Calling those compiles, then crashes on the other loaders.
+  and Forge on 1.7.10. Calling those compiles in `common` and in the IDE, then fails to compile on the nodes of the
+  other loaders, which build common's sources on their own classpath.
 - MixinExtras ships with Fabric, NeoForge, Forge 26.x and UniMixins. Forge 1.21.1 and 1.20.1 do not have it,
   so bundle it there or leave it out.
-- Write Java that the oldest listed version can compile. With 1.7.10 in the list that is Java 8.
+- Write Java that the oldest listed version can compile. With 1.7.10 in the list that is Java 8. Lines inside a
+  version branch may use that version's Java.
 - The build sets the mixin `compatibilityLevel` from the Java version, capped at `JAVA_21`.
   Forge's Mixin rejects anything newer.
 - Put client-only mixins in the `client` list so dedicated servers skip them.
