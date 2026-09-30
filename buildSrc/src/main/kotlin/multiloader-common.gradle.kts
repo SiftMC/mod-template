@@ -59,3 +59,11 @@ tasks.processResources {
 interface Mutex : BuildService<BuildServiceParameters.None>
 val mutex = gradle.sharedServices.registerIfAbsent("minecraftToolchainMutex", Mutex::class.java) { maxParallelUsages = 1 }
 tasks.named { it == "createMinecraftArtifacts" }.configureEach { usesService(mutex) }
+
+pluginManager.withPlugin("com.gtnewhorizons.retrofuturagradle") {
+    tasks.named { !it.startsWith("run") }.configureEach { usesService(mutex) }
+    // RetroFuturaGradle adds source sets for its own generated code. Stonecutter only handles main.
+    tasks.named { Regex("stonecutter(Prepare|Generate|Merge).+").matches(it) }.configureEach {
+        enabled = false
+    }
+}
