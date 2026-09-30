@@ -1,19 +1,36 @@
+import dev.kikugie.stonecutter.build.StonecutterBuildExtension
+
 plugins {
     id("multiloader-common")
 }
 
-// Loaders compile common's sources themselves, so the final jar contains everything and
-// each toolchain processes it; the project dependency is only for IDE navigation.
-val common = layout.settingsDirectory.dir("common/src/main")
+// Loaders compile common's sources themselves, so the final jar contains everything and each toolchain processes it.
+// The common node's main source set is common/src/main for the active version. For every other version it is the
+// output of that node's stonecutterGenerate task, which runs first because Stonecutter marks the directory as built by it.
+// The project dependency is only for IDE navigation.
+val sc = the<StonecutterBuildExtension>()
+val common = checkNotNull(sc.node.sibling("common")) { "No common node for ${sc.current.version}" }.project
+evaluationDependsOn(common.path)
+val commonMain = common.the<SourceSetContainer>()["main"]
 
 dependencies {
-    compileOnly(project(":common"))
+    // Loom's remapping variant publishes the remapped jar. The Mojang-mapped one is in namedElements.
+    compileOnly(project(common.path, common.configurations.findByName("namedElements")?.name))
 }
 
 tasks.compileJava {
-    source(common.dir("java"))
+    source(commonMain.java)
 }
 
 tasks.processResources {
-    from(common.dir("resources"))
+    from(commonMain.resources)
+}
+
+// -Pjoin makes runClient connect to the dev server on localhost as soon as the game is up.
+// An argument provider puts the arguments last. ModDevGradle reads its first argument as the main class.
+if (providers.gradleProperty("join").isPresent) {
+    val join = if (sc.current.parsed >= "1.20") listOf("--quickPlayMultiplayer", "localhost") else listOf("--server", "localhost")
+    tasks.withType<JavaExec>().named { it == "runClient" }.configureEach {
+        argumentProviders.add(CommandLineArgumentProvider { join })
+    }
 }

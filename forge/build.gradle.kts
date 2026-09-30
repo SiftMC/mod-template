@@ -12,10 +12,10 @@ repositories {
 }
 
 dependencies {
-    implementation(minecraft.dependency("net.minecraftforge:forge:${property("minecraft_version")}-${property("forge_version")}"))
+    implementation(minecraft.dependency("net.minecraftforge:forge:${sc.current.version}-${property("forge_version")}"))
 }
 
-// Forge has no mixin entry in mods.toml: dev runs get the config as an argument, the jar via its manifest.
+// Forge has no mixin entry in mods.toml. Dev runs get the config as an argument, the jar through its manifest.
 minecraft {
     runs {
         configureEach {

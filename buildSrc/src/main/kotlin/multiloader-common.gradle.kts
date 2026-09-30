@@ -1,15 +1,28 @@
+import dev.kikugie.stonecutter.build.StonecutterBuildExtension
+import org.gradle.api.services.BuildService
+import org.gradle.api.services.BuildServiceParameters
+
 plugins {
     `java-library`
 }
 
+val sc = the<StonecutterBuildExtension>()
 val modId = providers.gradleProperty("mod_id").get()
-val minecraftVersion = providers.gradleProperty("minecraft_version").get()
+val minecraftVersion = sc.current.version
+val javaVersion = when {
+    sc.current.parsed >= "26.1" -> 25
+    sc.current.parsed >= "1.20.5" -> 21
+    sc.current.parsed >= "1.18" -> 17
+    sc.current.parsed >= "1.17" -> 16
+    else -> 8
+}
 
-group = providers.gradleProperty("mod_group").get()
+// Gradle tells projects apart by group and name. The name is the version, so the branch goes into the group.
+group = "${providers.gradleProperty("mod_group").get()}.${sc.branch.id}"
 version = providers.gradleProperty("mod_version").get()
-base.archivesName = "$modId-${project.name}-$minecraftVersion"
+base.archivesName = "$modId-${sc.branch.id}-$minecraftVersion"
 
-java.toolchain.languageVersion = JavaLanguageVersion.of(providers.gradleProperty("java_version").get())
+java.toolchain.languageVersion = JavaLanguageVersion.of(javaVersion)
 
 tasks.withType<JavaCompile>().configureEach {
     options.encoding = "UTF-8"
@@ -19,15 +32,30 @@ tasks.jar {
     from(layout.settingsDirectory.file("LICENSE"))
 }
 
-// Every gradle.properties entry can be used as ${name} in loader metadata.
+// Loader metadata can use ${name} for every mod_* entry in gradle.properties, every snake_case key in
+// stonecutter.properties.toml, and the values computed here.
 tasks.processResources {
-    val (major, minor) = minecraftVersion.substringBefore('-').split('.')
-    val props = providers.gradlePropertiesPrefixedBy("").get() +
-        // Compatible with every hotfix of this minor version, e.g. 26.3 -> [26.3,26.4)
-        ("minecraft_version_range" to "[$minecraftVersion,$major.${minor.toInt() + 1})")
+    val numbers = minecraftVersion.substringBefore('-').split('.').map(String::toInt)
+    // Up to 1.21 the third number is a release of its own, e.g. 1.21.1 -> 1.21.2. From 26.1 it is a hotfix, e.g. 26.3 -> 26.4.
+    val next = if (numbers[0] == 1) "1.${numbers[1]}.${numbers.getOrElse(2) { 0 } + 1}" else "${numbers[0]}.${numbers[1] + 1}"
+    val props = providers.gradlePropertiesPrefixedBy("mod_").get() +
+        project.extra.properties.filterKeys { it.matches(Regex("[a-z0-9]+(_[a-z0-9]+)+")) }.mapValues { it.value.toString() } +
+        mapOf(
+            "minecraft_version" to minecraftVersion,
+            "minecraft_version_range" to "[$minecraftVersion,$next)",
+            // The same range in Fabric's syntax.
+            "minecraft_version_predicate" to if (numbers[0] == 1) minecraftVersion else "~$minecraftVersion",
+            // Forge's Mixin rejects anything above JAVA_21.
+            "mixin_compatibility_level" to "JAVA_${minOf(javaVersion, 21)}",
+        )
 
     inputs.properties(props)
-    filesMatching(listOf("fabric.mod.json", "META-INF/*mods.toml", "pack.mcmeta")) {
+    filesMatching(listOf("fabric.mod.json", "META-INF/*mods.toml", "mcmod.info", "pack.mcmeta", "*.mixins.json")) {
         expand(props)
     }
 }
+
+// Toolchains that decompile Minecraft or share files in the Gradle user home set up one project at a time.
+interface Mutex : BuildService<BuildServiceParameters.None>
+val mutex = gradle.sharedServices.registerIfAbsent("minecraftToolchainMutex", Mutex::class.java) { maxParallelUsages = 1 }
+tasks.named { it == "createMinecraftArtifacts" }.configureEach { usesService(mutex) }
