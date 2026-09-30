@@ -1,0 +1,25 @@
+plugins {
+    id("multiloader-loader")
+    id("net.neoforged.moddev")
+}
+
+neoForge {
+    version = "${property("neoforge_version")}"
+
+    runs {
+        register("client") { client() }
+        register("server") {
+            server()
+            programArgument("--nogui")
+        }
+        configureEach {
+            gameDirectory = layout.projectDirectory.dir("run")
+        }
+    }
+
+    mods {
+        register("${property("mod_id")}") {
+            sourceSet(sourceSets.main.get())
+        }
+    }
+}
