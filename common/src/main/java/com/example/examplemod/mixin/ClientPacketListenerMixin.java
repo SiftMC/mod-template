@@ -7,7 +7,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-//? if >=1.19 {
+//? if >=1.14 {
 import net.minecraft.SharedConstants;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.network.chat.Component;
@@ -17,22 +17,19 @@ import net.minecraft.realms.RealmsSharedConstants;
 import net.minecraft.util.ChatComponentText;
 *///?}
 
-/** Greets the player after joining a world or server. Every loader brands the client, so this needs no loader API. */
-//? if >=1.19 {
+/**
+ * ClientPacketListenerMixin greets the player in chat after joining a world or server.
+ * Every loader brands the client, so the greeting needs no loader API.
+ */
+//~ if <1.14 'ClientPacketListener' -> 'NetHandlerPlayClient'
 @Mixin(ClientPacketListener.class)
-//?} else {
-/*@Mixin(NetHandlerPlayClient.class)
-*///?}
 public abstract class ClientPacketListenerMixin {
-    //? if >=1.19 {
+    //~ if <1.14 'handleLogin' -> 'handleJoinGame'
     @Inject(method = "handleLogin", at = @At("TAIL"))
-    //?} else {
-    /*@Inject(method = "handleJoinGame", at = @At("TAIL"))
-    *///?}
-    private void examplemod$greet(CallbackInfo ci) {
+    private void greet(CallbackInfo ci) {
         //? if >=1.21.6 {
         String version = SharedConstants.getCurrentVersion().name();
-        //?} elif >=1.19 {
+        //?} elif >=1.14 {
         /*String version = SharedConstants.getCurrentVersion().getName();
         *///?} else {
         /*String version = RealmsSharedConstants.VERSION_STRING;
