@@ -26,6 +26,31 @@ tasks.processResources {
     from(commonMain.resources)
 }
 
+val modId = providers.gradleProperty("mod_id").get()
+
+// Forge has no mixin entry in mods.toml, so the jar manifest names the config.
+val mixinConfig = "$modId.mixins.json"
+if (sc.branch.id == "forge") {
+    tasks.jar { manifest.attributes["MixinConfigs"] = mixinConfig }
+}
+
+// The toolchains that reobfuscate the jar write a refmap, and Mixin looks it up by this key.
+// The shared config leaves the key out, because the other toolchains write no refmap.
+for (plugin in listOf("net.neoforged.moddev.legacyforge", "com.gtnewhorizons.retrofuturagradle")) {
+    pluginManager.withPlugin(plugin) {
+        tasks.processResources {
+            val config = mixinConfig
+            val refmap = "\"refmap\": \"$modId.refmap.json\",\n  \"package\":"
+            filesMatching(config) {
+                filter { it.replace("\"package\":", refmap) }
+            }
+            doLast {
+                check("\"refmap\"" in destinationDir.resolve(config).readText()) { "$config did not get its refmap key" }
+            }
+        }
+    }
+}
+
 // -Pjoin makes runClient connect to the dev server on localhost as soon as the game is up.
 // An argument provider puts the arguments last. ModDevGradle reads its first argument as the main class.
 if (providers.gradleProperty("join").isPresent) {

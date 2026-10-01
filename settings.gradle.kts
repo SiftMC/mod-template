@@ -21,17 +21,27 @@ stonecutter {
             val versions = targets.filterValues { loader in it }.keys
             if (versions.isNotEmpty()) branch(loader) { versions(versions) }
         }
-        // Older Minecraft needs other toolchains. Before 26.1 the game is obfuscated and build.legacy.gradle.kts builds it.
-        // Before 1.14 there are no Mojang mappings either and build.retro.gradle.kts builds it.
+        // The build script for each loader and Minecraft version, as in the README table.
+        // Before 26.1 the game is obfuscated. Before 1.14.4 there are no Mojang mappings.
         mapBuilds { branch, node ->
-            val script = when {
-                // NeoForge builds with ModDevGradle on every version. Forge has run on Mojang names since 1.20.6.
-                branch == "neoforge" || node.parsed >= (if (branch == "forge") "1.20.6" else "26.1") -> "build.gradle.kts"
-                node.parsed >= "1.14" -> "build.legacy.gradle.kts"
-                else -> "build.retro.gradle.kts"
+            val version = node.parsed
+            val retro = "build.retro.gradle.kts".takeIf { node.version == "1.7.10" }
+            val script = when (branch) {
+                "neoforge" -> "build.gradle.kts".takeIf { version >= "1.21" }
+                "forge" -> when {
+                    version >= "1.20.6" -> "build.gradle.kts"
+                    version >= "1.17" && version < "1.20.2" -> "build.legacy.gradle.kts"
+                    else -> retro
+                }
+                else -> when {
+                    version >= "26.1" -> "build.gradle.kts"
+                    version >= "1.14.4" -> "build.legacy.gradle.kts"
+                    else -> retro
+                }
             }
-            check(rootDir.resolve("$branch/$script").exists()) { "Minecraft ${node.version} needs $branch/$script" }
-            script
+            checkNotNull(script?.takeIf { rootDir.resolve("$branch/$it").exists() }) {
+                "Minecraft ${node.version} has no $branch build script. See the version table in README.md."
+            }
         }
         vcsVersion = targets.keys.first()
     }

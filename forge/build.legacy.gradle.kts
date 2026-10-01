@@ -6,7 +6,6 @@ plugins {
 }
 
 val modId = "${property("mod_id")}"
-val mixinConfig = "$modId.mixins.json"
 
 legacyForge {
     enable { forgeVersion = "${sc.current.version}-${property("forge_version")}" }
@@ -17,41 +16,20 @@ legacyForge {
             server()
             programArgument("--nogui")
         }
-        configureEach {
-            gameDirectory = layout.projectDirectory.dir("run")
-            disableIdeRun()
-        }
+        configureEach { disableIdeRun() }
     }
 
     mods {
-        register(modId) {
-            sourceSet(sourceSets.main.get())
-        }
+        register(modId) { sourceSet(sourceSets.main.get()) }
     }
 }
 
-// Forge has no mixin entry in mods.toml. Dev runs get the config as an argument, the jar through its manifest.
+// Dev runs read the mixin config from here. The loader plugin puts it in the jar manifest and adds the refmap key.
 mixin {
-    config(mixinConfig)
+    config("$modId.mixins.json")
     add(sourceSets.main.get(), "$modId.refmap.json")
 }
 
 dependencies {
     annotationProcessor("org.spongepowered:mixin:0.8.5:processor")
-}
-
-tasks.jar {
-    manifest.attributes["MixinConfigs"] = mixinConfig
-}
-
-// Mixin looks the refmap up by this key. Only the reobfuscating toolchains write one, so the shared config leaves it out.
-tasks.processResources {
-    val config = mixinConfig
-    val refmap = "\"refmap\": \"$modId.refmap.json\",\n  \"package\":"
-    filesMatching(config) {
-        filter { it.replace("\"package\":", refmap) }
-    }
-    doLast {
-        check("\"refmap\"" in destinationDir.resolve(config).readText()) { "$config did not get its refmap key" }
-    }
 }

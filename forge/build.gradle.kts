@@ -15,7 +15,7 @@ dependencies {
     implementation(minecraft.dependency("net.minecraftforge:forge:${sc.current.version}-${property("forge_version")}"))
 }
 
-// Forge has no mixin entry in mods.toml. Dev runs get the config as an argument, the jar through its manifest.
+// Forge has no mixin entry in mods.toml. Dev runs get the config as an argument, the jar from the loader plugin.
 minecraft {
     runs {
         configureEach {
@@ -27,8 +27,4 @@ minecraft {
             args("--nogui")
         }
     }
-}
-
-tasks.jar {
-    manifest.attributes["MixinConfigs"] = mixinConfig
 }

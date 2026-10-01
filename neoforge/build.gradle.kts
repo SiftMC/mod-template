@@ -12,15 +12,10 @@ neoForge {
             server()
             programArgument("--nogui")
         }
-        configureEach {
-            gameDirectory = layout.projectDirectory.dir("run")
-            disableIdeRun()
-        }
+        configureEach { disableIdeRun() }
     }
 
     mods {
-        register("${property("mod_id")}") {
-            sourceSet(sourceSets.main.get())
-        }
+        register("${property("mod_id")}") { sourceSet(sourceSets.main.get()) }
     }
 }
