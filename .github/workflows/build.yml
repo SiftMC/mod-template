@@ -1,0 +1,20 @@
+name: build
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v5
+      - uses: gradle/actions/setup-gradle@v5
+      - run: ./gradlew build
+      # Each loader and version starts a dev server and joins it with a dev client.
+      # -Pexpect is the greeting of the example mixin. Remove it when you remove the mixin.
+      - run: xvfb-run -a ./gradlew joinTest --continue -Peula=true "-Pexpect=[CHAT] Hello from"
