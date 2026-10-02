@@ -1,0 +1,30 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+      - uses: gradle/actions/setup-gradle@v5
+      - run: ./gradlew build
+      # A mod_version without a tag yet is a new release. It goes to every platform set in gradle.properties,
+      # and the tag marks it as published.
+      - if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        env:
+          MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
+          CURSEFORGE_TOKEN: ${{ secrets.CURSEFORGE_TOKEN }}
+        run: |
+          tag="v$(sed -n 's/^mod_version=//p' gradle.properties)"
+          if git ls-remote --exit-code --tags origin "$tag" > /dev/null; then echo "$tag is published already"; exit 0; fi
+          if ! grep -qE '^(modrinth|curseforge)_id=.+' gradle.properties; then echo "No platform id in gradle.properties"; exit 0; fi
+          ./gradlew publishMods
+          git tag "$tag"
+          git push origin "$tag"

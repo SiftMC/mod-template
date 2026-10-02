@@ -2,6 +2,7 @@ import dev.kikugie.stonecutter.build.StonecutterBuildExtension
 
 plugins {
     id("multiloader-common")
+    id("me.modmuss50.mod-publish-plugin")
 }
 
 // Loaders compile common's sources themselves, so the final jar contains everything and each toolchain processes it.
@@ -53,6 +54,44 @@ if (providers.gradleProperty("join").isPresent) {
         doFirst {
             options.parentFile.mkdirs()
             if (!options.exists()) options.writeText("onboardAccessibility:false\nskipMultiplayerWarning:true\n")
+        }
+    }
+}
+
+// publishMods uploads the release jar to each platform whose project id is in gradle.properties, as version
+// <mod_version>-<Minecraft version> with the matching section of CHANGELOG.md. -PdryRun uploads nothing.
+publishMods {
+    val modVersion = providers.gradleProperty("mod_version").get()
+    val minecraft = sc.current.version
+    val loader = sc.branch.id
+    // The toolchains that remap or reobfuscate the jar ship the output of that task.
+    file = provider { listOf("remapJar", "reobfJar", "jar").first(tasks.names::contains) }
+        .flatMap { tasks.named<AbstractArchiveTask>(it).flatMap(AbstractArchiveTask::getArchiveFile) }
+    version = "$modVersion-$minecraft"
+    displayName = "${providers.gradleProperty("mod_name").get()} $modVersion-$minecraft"
+    changelog = providers.fileContents(layout.settingsDirectory.file("CHANGELOG.md")).asText.map {
+        "\n$it".substringAfter("\n## $modVersion\n", "").substringBefore("\n## ").trim()
+            .ifEmpty { error("CHANGELOG.md has no section ## $modVersion") }
+    }
+    type = STABLE
+    modLoaders.add(loader)
+    dryRun = providers.gradleProperty("dryRun").isPresent
+    providers.gradleProperty("modrinth_id").orNull?.takeIf(String::isNotBlank)?.let { id ->
+        modrinth {
+            projectId = id
+            accessToken = providers.environmentVariable("MODRINTH_TOKEN")
+            minecraftVersions.add(minecraft)
+            if (loader == "fabric") requires("fabric-api")
+        }
+    }
+    providers.gradleProperty("curseforge_id").orNull?.takeIf(String::isNotBlank)?.let { id ->
+        curseforge {
+            projectId = id
+            accessToken = providers.environmentVariable("CURSEFORGE_TOKEN")
+            minecraftVersions.add(minecraft)
+            client = true
+            server = true
+            if (loader == "fabric") requires("fabric-api")
         }
     }
 }
