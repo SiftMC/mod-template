@@ -24,6 +24,15 @@ base.archivesName = "$modId-${sc.branch.id}-$minecraftVersion"
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(javaVersion)
 
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // @NotNull and @Nullable for IntelliJ's null checks. They are not in the jar.
+    compileOnly("org.jetbrains:annotations:26.1.0")
+}
+
 tasks.withType<JavaCompile>().configureEach {
     options.encoding = "UTF-8"
 }
