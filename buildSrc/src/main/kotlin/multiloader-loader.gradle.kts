@@ -5,9 +5,7 @@ plugins {
     id("me.modmuss50.mod-publish-plugin")
 }
 
-// Loaders compile common's sources themselves, so the final jar contains everything and each toolchain processes it.
-// The common node's main source set is common/src/main for the active version. For every other version it is the
-// output of that node's stonecutterGenerate task, which runs first because Stonecutter marks the directory as built by it.
+// Each loader compiles common's sources itself, so its toolchain processes the whole jar.
 // The project dependency is only for IDE navigation.
 val sc = the<StonecutterBuildExtension>()
 val common = checkNotNull(sc.node.sibling("common")) { "No common node for ${sc.current.version}" }.project
@@ -58,8 +56,7 @@ if (providers.gradleProperty("join").isPresent) {
     }
 }
 
-// publishMods uploads the release jar to each platform whose project id is in gradle.properties, as version
-// <mod_version>-<Minecraft version> with the matching section of CHANGELOG.md. -PdryRun uploads nothing.
+// Each platform with a project id in gradle.properties gets the release jar. -PdryRun uploads nothing.
 publishMods {
     val modVersion = providers.gradleProperty("mod_version").get()
     val minecraft = sc.current.version
@@ -67,8 +64,8 @@ publishMods {
     // The toolchains that remap or reobfuscate the jar ship the output of that task.
     file = provider { listOf("remapJar", "reobfJar", "jar").first(tasks.names::contains) }
         .flatMap { tasks.named<AbstractArchiveTask>(it).flatMap(AbstractArchiveTask::getArchiveFile) }
-    version = "$modVersion-$minecraft"
-    displayName = "${providers.gradleProperty("mod_name").get()} $modVersion-$minecraft"
+    version = project.version.toString()
+    displayName = "${providers.gradleProperty("mod_name").get()} ${project.version}"
     changelog = providers.fileContents(layout.settingsDirectory.file("CHANGELOG.md")).asText.map {
         "\n$it".substringAfter("\n## $modVersion\n", "").substringBefore("\n## ").trim()
             .ifEmpty { error("CHANGELOG.md has no section ## $modVersion") }

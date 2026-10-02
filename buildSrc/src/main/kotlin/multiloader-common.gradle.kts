@@ -19,8 +19,8 @@ val javaVersion = when {
 
 // Gradle tells projects apart by group and name. The name is the version, so the branch goes into the group.
 group = "${providers.gradleProperty("mod_group").get()}.${sc.branch.id}"
-version = providers.gradleProperty("mod_version").get()
-base.archivesName = "$modId-${sc.branch.id}-$minecraftVersion"
+version = "${providers.gradleProperty("mod_version").get()}-$minecraftVersion"
+base.archivesName = "$modId-${sc.branch.id}"
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(javaVersion)
 
@@ -29,7 +29,7 @@ repositories {
 }
 
 dependencies {
-    // @NotNull and @Nullable for IntelliJ's null checks. They are not in the jar.
+    // For IntelliJ's null checks. Not in the jar.
     compileOnly("org.jetbrains:annotations:26.1.0")
 }
 
@@ -52,7 +52,6 @@ tasks.processResources {
         mapOf(
             "minecraft_version" to minecraftVersion,
             "minecraft_version_range" to "[$minecraftVersion,$next)",
-            // The same range in Fabric's syntax.
             "minecraft_version_predicate" to if (numbers[0] == 1) minecraftVersion else "~$minecraftVersion",
             // Forge's Mixin rejects anything above JAVA_21.
             "mixin_compatibility_level" to "JAVA_${minOf(javaVersion, 21)}",

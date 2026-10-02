@@ -60,6 +60,8 @@ The version on each platform is `<mod_version>-<Minecraft version>`, such as `0.
    account settings.
 3. For each release, raise `mod_version` and add a `## <mod_version>` section to `CHANGELOG.md`.
    The release stops when that section is missing.
+4. If one platform fails after the other took the upload, fix the cause, run `./gradlew publishModrinth` or
+   `./gradlew publishCurseforge` for the failed one, then push the tag `v<mod_version>` yourself.
 
 `./gradlew publishMods` releases from your machine with the same two environment variables.
 

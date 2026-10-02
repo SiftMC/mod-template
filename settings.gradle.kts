@@ -24,7 +24,6 @@ stonecutter {
             val versions = targets.filterValues { loader in it }.keys
             if (versions.isNotEmpty()) branch(loader) { versions(versions) }
         }
-        // The build script for each loader and Minecraft version, as in the README table.
         // Before 26.1 the game is obfuscated. Before 1.14.4 there are no Mojang mappings.
         mapBuilds { branch, node ->
             val version = node.parsed

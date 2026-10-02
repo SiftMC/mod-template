@@ -5,6 +5,6 @@ plugins {
 
 dependencies {
     minecraft("com.mojang:minecraft:${sc.current.version}")
-    // Only for Mixin and MixinExtras. Never call Fabric Loader API from common, @Environment included.
+    // Only for Mixin and MixinExtras. Fabric Loader API stays out of common.
     compileOnly("net.fabricmc:fabric-loader:${property("fabric_loader_version")}")
 }
