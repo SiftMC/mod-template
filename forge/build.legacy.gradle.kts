@@ -17,20 +17,15 @@ legacyForge {
             server()
             programArgument("--nogui")
         }
-        configureEach {
-            gameDirectory = layout.projectDirectory.dir("run")
-            disableIdeRun()
-        }
+        configureEach { disableIdeRun() }
     }
 
     mods {
-        register(modId) {
-            sourceSet(sourceSets.main.get())
-        }
+        register(modId) { sourceSet(sourceSets.main.get()) }
     }
 }
 
-// Forge has no mixin entry in mods.toml. Dev runs get the config as an argument, the jar through its manifest.
+// Forge metadata has no mixin entry. Dev runs get the config from here, the jar through its manifest.
 mixin {
     config(mixinConfig)
     add(sourceSets.main.get(), "$modId.refmap.json")
@@ -44,7 +39,7 @@ tasks.jar {
     manifest.attributes["MixinConfigs"] = mixinConfig
 }
 
-// Mixin looks the refmap up by this key. Only the reobfuscating toolchains write one, so the shared config leaves it out.
+// Mixin finds the refmap through this key. The shared config leaves it out, because the other toolchains write none.
 tasks.processResources {
     val config = mixinConfig
     val refmap = "\"refmap\": \"$modId.refmap.json\",\n  \"package\":"

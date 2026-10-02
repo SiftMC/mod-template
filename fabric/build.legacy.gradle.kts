@@ -10,9 +10,3 @@ dependencies {
     modImplementation("net.fabricmc:fabric-loader:${property("fabric_loader_version")}")
     modImplementation("net.fabricmc.fabric-api:fabric-api:${property("fabric_api_version")}")
 }
-
-loom {
-    runs.configureEach {
-        runDirectory = layout.projectDirectory.dir("run")
-    }
-}

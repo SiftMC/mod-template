@@ -15,7 +15,8 @@ dependencies {
     implementation(minecraft.dependency("net.minecraftforge:forge:${sc.current.version}-${property("forge_version")}"))
 }
 
-// Forge has no mixin entry in mods.toml. Dev runs get the config as an argument, the jar through its manifest.
+// ForgeGradle runs in runs/main/<run> by default, and the loader plugin sets up run/.
+// Forge metadata has no mixin entry. Dev runs get the config as an argument, the jar through its manifest.
 minecraft {
     runs {
         configureEach {
