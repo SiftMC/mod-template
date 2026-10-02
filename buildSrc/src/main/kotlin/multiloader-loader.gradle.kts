@@ -26,11 +26,33 @@ tasks.processResources {
     from(commonMain.resources)
 }
 
+// A new run directory gets what the dev server needs to let the dev client in. The client has no Minecraft account,
+// and a 26.x server turns its whitelist on. The eula property agrees to https://aka.ms/MinecraftEULA.
+// afterEvaluate puts this action ahead of RetroFuturaGradle's, which asks for both files on the console.
+afterEvaluate {
+    tasks.withType<JavaExec>().named { it == "runServer" }.configureEach {
+        val run = layout.projectDirectory.dir("run").asFile
+        val eula = providers.gradleProperty("eula").orNull == "true"
+        doFirst {
+            run.mkdirs()
+            val properties = run.resolve("server.properties")
+            if (!properties.exists()) properties.writeText("online-mode=false\nwhite-list=false\n")
+            if (eula) run.resolve("eula.txt").writeText("eula=true\n")
+        }
+    }
+}
+
 // -Pjoin makes runClient connect to the dev server on localhost as soon as the game is up.
 // An argument provider puts the arguments last. ModDevGradle reads its first argument as the main class.
 if (providers.gradleProperty("join").isPresent) {
     val join = if (sc.current.parsed >= "1.20") listOf("--quickPlayMultiplayer", "localhost") else listOf("--server", "localhost")
     tasks.withType<JavaExec>().named { it == "runClient" }.configureEach {
+        val options = layout.projectDirectory.file("run/options.txt").asFile
         argumentProviders.add(CommandLineArgumentProvider { join })
+        // A new client stops at the accessibility screen and the multiplayer warning.
+        doFirst {
+            options.parentFile.mkdirs()
+            if (!options.exists()) options.writeText("onboardAccessibility:false\nskipMultiplayerWarning:true\n")
+        }
     }
 }
