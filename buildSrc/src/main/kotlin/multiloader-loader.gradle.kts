@@ -58,7 +58,6 @@ if (providers.gradleProperty("join").isPresent) {
 
 // Each platform with a project id in gradle.properties gets the release jar. -PdryRun uploads nothing.
 publishMods {
-    val modVersion = providers.gradleProperty("mod_version").get()
     val minecraft = sc.current.version
     val loader = sc.branch.id
     // The toolchains that remap or reobfuscate the jar ship the output of that task.
@@ -66,10 +65,7 @@ publishMods {
         .flatMap { tasks.named<AbstractArchiveTask>(it).flatMap(AbstractArchiveTask::getArchiveFile) }
     version = project.version.toString()
     displayName = "${providers.gradleProperty("mod_name").get()} ${project.version}"
-    changelog = providers.fileContents(layout.settingsDirectory.file("CHANGELOG.md")).asText.map {
-        "\n$it".substringAfter("\n## $modVersion\n", "").substringBefore("\n## ").trim()
-            .ifEmpty { error("CHANGELOG.md has no section ## $modVersion") }
-    }
+    changelog = providers.environmentVariable("CHANGELOG").orElse("")
     type = STABLE
     modLoaders.add(loader)
     dryRun = providers.gradleProperty("dryRun").isPresent

@@ -32,11 +32,11 @@ Delete the sections of `stonecutter.properties.toml` that you don't target befor
 ./gradlew :fabric:26.3:runClient          # any loader, any listed version
 ./gradlew :fabric:26.3:runServer
 ./gradlew :fabric:26.3:runClient -Pjoin   # joins the dev server that is running
-./gradlew publishMods -PdryRun            # shows what a release would upload, without uploading
 ```
 
 Any Java from 8 up starts Gradle. Gradle downloads the JDK it runs on and the JDK each Minecraft version needs.
-On 1.7.10 the jar to ship is the one without `-dev` in its name.
+On 1.7.10 the jar to ship is the one without `-dev` in its name. A commit subject starts with `feat:`, `fix:` or another
+[Conventional Commits](https://www.conventionalcommits.org) prefix, because the release version comes from them.
 
 A dev server starts once you agree to the [Minecraft EULA](https://aka.ms/MinecraftEULA). Add `-Peula=true` to the
 command, or put `eula=true` in `~/.gradle/gradle.properties` to agree for every run directory.
@@ -49,21 +49,27 @@ Start the server before the client that joins it.
 
 ## Releases
 
-GitHub Actions builds every push to `main` and every pull request. A push to `main` with a new `mod_version`
-also releases it. It uploads every loader and Minecraft version to Modrinth and CurseForge, then tags the commit
-`v<mod_version>`.
-The version on each platform is `<mod_version>-<Minecraft version>`, such as `0.5-1.7.10`.
+The release workflow is a button under Actions. It reads the commits since the last `v*` tag, picks the next
+version from their prefixes, uploads every loader and Minecraft version to Modrinth and CurseForge, and creates the
+tag and a GitHub release. The `feat`, `fix` and `perf` commit subjects are the changelog.
+
+| Commit subject starts with | Before 1.0.0 | From 1.0.0 |
+|---|---|---|
+| `fix:` or `perf:` | patch, 0.3.0 to 0.3.1 | patch |
+| `feat:` | minor, 0.3.1 to 0.4.0 | minor |
+| `feat!:`, or `BREAKING CHANGE` in the body | minor | major |
+| anything else, such as `docs:` or `chore:` | no release | no release |
+
+One release takes one step, however many commits it holds. The first release is 0.1.0. For 1.0.0, type it into the
+version field of the button. Each file is versioned `<mod version>+<Minecraft version>-<loader>`, such as
+`0.3.1+1.7.10-forge`. Local builds are 0.0.0.
 
 1. Set `modrinth_id` and `curseforge_id` in `gradle.properties`. A platform without an id gets nothing.
 2. Add the repository secrets `MODRINTH_TOKEN` and `CURSEFORGE_TOKEN` under Settings, Secrets and variables, Actions.
    The Modrinth token needs the scope to create versions. CurseForge issues its token under API tokens in your
    account settings.
-3. For each release, raise `mod_version` and add a `## <mod_version>` section to `CHANGELOG.md`.
-   The release stops when that section is missing.
-4. If one platform fails after the other took the upload, fix the cause, run `./gradlew publishModrinth` or
-   `./gradlew publishCurseforge` for the failed one, then push the tag `v<mod_version>` yourself.
-
-`./gradlew publishMods` releases from your machine with the same two environment variables.
+3. If one platform fails after the other took the upload, fix the cause and run the failed one from your machine
+   with its token, `./gradlew publishCurseforge -Pmod_version=0.3.1`. Then run `gh release create v0.3.1`.
 
 ## Minecraft versions
 

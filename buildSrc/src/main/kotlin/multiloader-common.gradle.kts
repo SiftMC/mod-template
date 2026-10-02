@@ -19,8 +19,8 @@ val javaVersion = when {
 
 // Gradle tells projects apart by group and name. The name is the version, so the branch goes into the group.
 group = "${providers.gradleProperty("mod_group").get()}.${sc.branch.id}"
-version = "${providers.gradleProperty("mod_version").get()}-$minecraftVersion"
-base.archivesName = "$modId-${sc.branch.id}"
+version = "${providers.gradleProperty("mod_version").get()}+$minecraftVersion-${sc.branch.id}"
+base.archivesName = modId
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(javaVersion)
 
