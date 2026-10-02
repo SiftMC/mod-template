@@ -4,15 +4,8 @@ plugins {
     id("com.gtnewhorizons.retrofuturagradle")
 }
 
-minecraft {
-    mcVersion = sc.current.version
-}
-
-repositories {
-    maven("https://nexus.gtnewhorizons.com/repository/public/")
-}
-
-dependencies {
-    // Only for Mixin and MixinExtras.
-    compileOnly("io.github.legacymoddingmc:unimixins:${property("unimixins_version")}:dev")
+// Forge 1.7.10 has no Mixin, so the mixins and their config stay out of the 1.7.10 jars.
+sourceSets.main {
+    java.exclude("**/mixin/**")
+    resources.exclude("*.mixins.json")
 }

@@ -21,4 +21,3 @@ forge_version = "47.4.23"
 ["1.7.10"]
 # RetroFuturaGradle always builds against this Forge.
 forge_version = "10.13.4.1614"
-unimixins_version = "0.3.1"
