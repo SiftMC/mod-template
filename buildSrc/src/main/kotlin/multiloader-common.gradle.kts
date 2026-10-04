@@ -47,7 +47,7 @@ tasks.processResources {
     val numbers = minecraftVersion.substringBefore('-').split('.').map(String::toInt)
     // Up to 1.21 the third number is a release of its own, e.g. 1.21.1 -> 1.21.2. From 26.1 it is a hotfix, e.g. 26.3 -> 26.4.
     val next = if (numbers[0] == 1) "1.${numbers[1]}.${numbers.getOrElse(2) { 0 } + 1}" else "${numbers[0]}.${numbers[1] + 1}"
-    val props = providers.gradlePropertiesPrefixedBy("mod_").get() +
+    val props = (providers.gradlePropertiesPrefixedBy("mod_").get() +
         project.extra.properties.filterKeys { it.matches(Regex("[a-z0-9]+(_[a-z0-9]+)+")) }.mapValues { it.value.toString() } +
         mapOf(
             "minecraft_version" to minecraftVersion,
@@ -55,7 +55,12 @@ tasks.processResources {
             "minecraft_version_predicate" to if (numbers[0] == 1) minecraftVersion else "~$minecraftVersion",
             // Forge's Mixin rejects anything above JAVA_21.
             "mixin_compatibility_level" to "JAVA_${minOf(javaVersion, 21)}",
-        )
+        ))
+        // Every value lands in a JSON or TOML string, and both escape these the same way.
+        .mapValues { (_, value) ->
+            value.replace("\\", "\\\\").replace("\"", "\\\"")
+                .replace(Regex("\\p{Cntrl}")) { "\\u%04x".format(it.value[0].code) }
+        }
 
     inputs.properties(props)
     filesMatching(listOf("fabric.mod.json", "META-INF/*mods.toml", "mcmod.info", "pack.mcmeta", "*.mixins.json")) {
