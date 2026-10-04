@@ -57,7 +57,7 @@ tag and a GitHub release. The `feat`, `fix` and `perf` commit subjects are the c
 |---|---|---|
 | `fix:` or `perf:` | patch, 0.3.0 to 0.3.1 | patch |
 | `feat:` | minor, 0.3.1 to 0.4.0 | minor |
-| `feat!:`, or `BREAKING CHANGE` in the body | minor | major |
+| any type with `!`, such as `feat!:`, or a body line starting `BREAKING CHANGE:` | minor | major |
 | anything else, such as `docs:` or `chore:` | no release | no release |
 
 One release takes one step, however many commits it holds. The first release is 0.1.0. For 1.0.0, type it into the
@@ -68,8 +68,17 @@ version field of the button. Each file is versioned `<mod version>+<Minecraft ve
 2. Add the repository secrets `MODRINTH_TOKEN` and `CURSEFORGE_TOKEN` under Settings, Secrets and variables, Actions.
    The Modrinth token needs the scope to create versions. CurseForge issues its token under API tokens in your
    account settings.
-3. If one platform fails after the other took the upload, fix the cause and run the failed one from your machine
-   with its token, `./gradlew publishCurseforge -Pmod_version=0.3.1`. Then run `gh release create v0.3.1`.
+3. Tick `dry-run` on the button to test the workflow. It builds every jar and prints what each upload would send,
+   with placeholder ids and without tokens. It uploads nothing and creates no tag.
+
+The workflow stops before the first upload when no id is set, or when a set id has no token. An upload that fails
+on the platform's side can still leave others done, because Gradle uploads in parallel. The log names the failed
+tasks. Run only those from your machine, on the release commit, with the version and changelog from the log:
+
+```
+CURSEFORGE_TOKEN=... CHANGELOG="- fix: ..." ./gradlew :forge:1.7.10:publishCurseforge -Pmod_version=0.3.1
+gh release create v0.3.1 --target <release commit> --title 0.3.1 --notes "- fix: ..."
+```
 
 ## Minecraft versions
 

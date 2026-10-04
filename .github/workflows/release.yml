@@ -4,10 +4,16 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: Version to release. Empty picks it from the commits since the last tag.
+        description: Version to release, such as 1.0.0. Empty picks it from the commits since the last tag.
+      dry-run:
+        description: Build and check the upload, but publish nothing.
+        type: boolean
 
 permissions:
   contents: write
+
+# A second click waits for the running release, then sees its tag.
+concurrency: release
 
 jobs:
   release:
@@ -19,6 +25,7 @@ jobs:
       - uses: gradle/actions/setup-gradle@v5
       - env:
           VERSION: ${{ inputs.version }}
+          DRY: ${{ inputs.dry-run && '1' || '' }}
           GH_TOKEN: ${{ github.token }}
           MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
           CURSEFORGE_TOKEN: ${{ secrets.CURSEFORGE_TOKEN }}
