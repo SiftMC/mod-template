@@ -13,17 +13,11 @@ Hello from examplemod on fabric 26.3!
 
 ## New mod
 
-Set the `mod_*` entries in `gradle.properties`, then run this in the repo root with Java 11 or newer:
-
-```
-java NewMod.java
-```
-
-`mod_id` takes 2 to 64 lowercase letters, digits and `_`, and starts with a letter.
-The script renames the package, the classes, the mod id and the mixin config in all four projects. That includes
-the commented Stonecutter branches, which an IDE refactor skips. It names the classes after `mod_name`, puts
-`mod_author` in `LICENSE`, removes this section and deletes itself. `git checkout . && git clean -fd` undoes it.
-Delete the sections of `stonecutter.properties.toml` that you don't target before you write code.
+1. Set the `mod_*` entries in `gradle.properties`.
+2. Rename the package `com.example.examplemod`, the `ExampleMod*` classes, `MOD_ID` in `ExampleMod` and
+   `examplemod.mixins.json`. Search the whole repo for `examplemod`, because an IDE refactor skips the
+   commented Stonecutter branches.
+3. Delete the sections of `stonecutter.properties.toml` that you don't target.
 
 ## Commands
 
